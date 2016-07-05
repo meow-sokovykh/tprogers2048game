@@ -4,6 +4,9 @@ import org.lwjgl.LWJGLException;
 import org.lwjgl.opengl.Display;
 import org.lwjgl.opengl.DisplayMode;
 
+import java.util.Arrays;
+import java.util.Collections;
+
 import static main.Constants.*;
 import static org.lwjgl.opengl.GL11.*;
 
@@ -103,81 +106,110 @@ import static org.lwjgl.opengl.GL11.*;
             case UP:
             case DOWN:
                 for(int i=0; i<CELLS_COUNT_X; i++){
-                    ret = shift_column(i, direction, direction==Main.Direction.UP?CELLS_COUNT_Y-1:0) || ret;
+                    Cell[] arg =  cells[i];
+
+                    if(direction==Main.Direction.UP) Collections.reverse(Arrays.asList(arg));
+
+                    ShiftRowResult result = shiftRow (arg);
+
+                    if(direction==Main.Direction.UP) Collections.reverse(Arrays.asList(result.shiftedRow));
+
+                    cells[i] = result.shiftedRow;
+                    ret = ret || result.didAnythingMove;
                 }
                 break;
             case LEFT:
             case RIGHT:
                 for(int i=0; i<CELLS_COUNT_Y; i++){
-                    ret = shift_line(i, direction, direction==Main.Direction.RIGHT?CELLS_COUNT_X-1:0) || ret;
+                    Cell[] arg =  new Cell[CELLS_COUNT_X];
+
+                    for(int j=0; j<CELLS_COUNT_X; j++){
+                        arg[j] = cells[j][i];
+                    }
+
+                    if(direction==Main.Direction.RIGHT) Collections.reverse(Arrays.asList(arg));
+
+                    ShiftRowResult result = shiftRow (arg);
+
+                    if(direction==Main.Direction.RIGHT) Collections.reverse(Arrays.asList(result.shiftedRow));
+
+
+                    for(int j=0; j<CELLS_COUNT_X; j++){
+                        cells[j][i] = result.shiftedRow[j];
+                    }
+                    ret = ret || result.didAnythingMove;
                 }
-                break;
         }
 
         return ret;
     }
 
-   private static boolean shift_column(int n, Main.Direction direction, int curr_y) {
-        boolean ret = false;
-        int shift1 = direction== Main.Direction.UP?-1:1;
-        int shift_now = shift1;
+    private static class ShiftRowResult{
+        boolean didAnythingMove;
+        Cell[] shiftedRow;
+    }
 
-        MergeState tmp_state;
+     /**
+      * Автор: Darth (https://tproger.ru/author/alkurmtl/)
+      */
+    private static ShiftRowResult shiftRow (Cell[] oldRow){
+        ShiftRowResult ret = new ShiftRowResult();
 
-        while ((tmp_state=merge_cells(n, curr_y, n, curr_y+shift_now))!=MergeState.COMBINED && tmp_state!=MergeState.CANT_MERGE){
-            shift_now+=shift1;
-            ret = ret || (tmp_state==MergeState.MOVED_TO_EMPTY);
-            if(curr_y+shift_now<0 || curr_y+shift_now>=CELLS_COUNT_Y) return ret;
+        Cell[] oldRowWithoutZeroes = new Cell[oldRow.length];
+        {
+            int q = 0;
+
+            for (int i = 0; i < oldRow.length; i++){
+                if(oldRow[i].getState()!=0){
+                   if(q!=i){
+                       /// Это значит, что мы передвинули ячейку
+                       /// на место какого-то нуля (пустой плитки)
+                       ret.didAnythingMove = true;
+                   }
+
+                    oldRowWithoutZeroes[q] = oldRow[i];
+                    q++;
+                }
+            }
+
+            //Чтобы избежать null'ов в конце массива
+            for(int i=q; i<oldRowWithoutZeroes.length; i++){
+               oldRowWithoutZeroes[i] = new Cell(0);
+            }
         }
-        ret = ret || (tmp_state==MergeState.COMBINED);
 
-        if(curr_y+2*shift1>=0 && curr_y+2*shift1<CELLS_COUNT_Y)
-            return shift_column(n, direction, curr_y+shift1) || ret;
+        ret.shiftedRow = new Cell[oldRowWithoutZeroes.length];
+
+        {
+            int q = 0;
+
+            {
+                int i = 0;
+
+
+                while (i < oldRowWithoutZeroes.length) {
+                    if ((i+1)<oldRowWithoutZeroes.length && oldRowWithoutZeroes[i].getState() == oldRowWithoutZeroes[i + 1].getState()) {
+                        ret.didAnythingMove = true;
+                        ret.shiftedRow[q] = new Cell(oldRowWithoutZeroes[i].getState() * 2);
+                        i++;
+                    } else {
+                        ret.shiftedRow[q] = oldRowWithoutZeroes[i];
+                    }
+
+                    q++;
+                    i++;
+                }
+
+            }
+            //Чтобы избежать null'ов в конце массива
+            for(int j=q; j<ret.shiftedRow.length; j++){
+                ret.shiftedRow[j] = new Cell(0);
+            }
+        }
+
         return ret;
     }
 
-    private static boolean shift_line(int n, Main.Direction direction, int curr_x) {
-        boolean ret = false;
-        int shift1 = direction== Main.Direction.RIGHT?-1:1;
-        int shift_now = shift1;
-
-        MergeState tmp_state;
-
-        while ( (tmp_state=merge_cells(curr_x, n, curr_x+shift_now, n))!=MergeState.COMBINED
-                && tmp_state!=MergeState.CANT_MERGE){
-
-                shift_now+=shift1;
-                ret = ret || (tmp_state==MergeState.MOVED_TO_EMPTY);
-                if(curr_x+shift_now<0 || curr_x+shift_now>=CELLS_COUNT_X) return ret;
-        }
-        ret = ret || (tmp_state==MergeState.COMBINED);
-
-        if(curr_x+2*shift1>=0 && curr_x+2*shift1<CELLS_COUNT_X)
-            return shift_line(n, direction, curr_x+shift1) || ret;
-        return ret;
-    }
-
-    private enum MergeState{ MOVED_TO_EMPTY, COMBINED, DID_NOTHING, CANT_MERGE}
-
-    private static MergeState merge_cells(int x, int y, int x2, int y2){
-
-        if( cells[x2][y2].getState()==0) return MergeState.DID_NOTHING;
-
-        if(cells[x][y].getState()==0){
-            cells[x][y].setState(cells[x2][y2].getState());
-            cells[x2][y2].setState(0);
-            return MergeState.MOVED_TO_EMPTY;
-        }
-
-        if(cells[x][y].getState()==cells[x2][y2].getState()){
-            cells[x][y].setState(cells[x][y].getState() + cells[x2][y2].getState());
-            cells[x2][y2].setState(0);
-            if(cells[x][y].getState()==2048) Main.merged2048();
-            return MergeState.COMBINED;
-        }
-
-        return MergeState.CANT_MERGE;
-    } //*/
 
     ///А этот метод будет использоваться только локально,
     ///т.к.  другие классы должны работать на более высоком уровне
