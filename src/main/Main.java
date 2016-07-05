@@ -9,6 +9,11 @@ import static main.Constants.CELLS_COUNT_X;
 import static main.Constants.CELLS_COUNT_Y;
 import static main.Constants.CHANCE_OF_FOUR_SPAWN;
 
+/*
+Спасибо Yury Megumin (https://vk.com/feepro) за идею написать этот клон.
+Спасибо Анастасии В. за вдохновение для написание этого кода <3
+ */
+
 public class Main {
 
     private static int score;
