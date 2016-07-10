@@ -76,6 +76,8 @@ public class LwjglGraphicsModule implements GraphicsModule {
      */
     @Override
     public void draw(GameField field) {
+        glClear(GL_COLOR_BUFFER_BIT);
+
         for(int i = 0; i < COUNT_CELLS_X; i++) {
             for (int j = 0; j < COUNT_CELLS_Y; j++) {
                 drawCell(CELL_SIZE*i, CELL_SIZE*j, field.getState(i,j));

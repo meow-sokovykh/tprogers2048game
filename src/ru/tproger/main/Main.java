@@ -274,7 +274,8 @@ public class Main {
 
 
                 while (i < oldRowWithoutZeroes.length) {
-                    if((i+1 < oldRowWithoutZeroes.length) && (oldRowWithoutZeroes[i] == oldRowWithoutZeroes[i + 1])) {
+                    if((i+1 < oldRowWithoutZeroes.length) && (oldRowWithoutZeroes[i] == oldRowWithoutZeroes[i + 1])
+                            && oldRowWithoutZeroes[i]!=0) {
                         ret.didAnythingMove = true;
                         ret.shiftedRow[q] = oldRowWithoutZeroes[i] * 2;
                         if(ret.shiftedRow[q] == 2048) merged2048();
@@ -299,41 +300,40 @@ public class Main {
 
     /**
      * Создаёт в случайной пустой клетке игрового поля плитку (с ненулевым состоянием).
-     *
      */
     private static void generateNewCell() {
         int state = (new Random().nextInt(100) <= Constants.CHANCE_OF_LUCKY_SPAWN)
                 ? LUCKY_INITIAL_CELL_STATE
                 : INITIAL_CELL_STATE;
 
-        int random_x, random_y;
+        int randomX, randomY;
 
-        random_x = new Random().nextInt(Constants.COUNT_CELLS_X);
-        int current_x = random_x;
+        randomX = new Random().nextInt(Constants.COUNT_CELLS_X);
+        int currentX = randomX;
 
-        random_y = new Random().nextInt(Constants.COUNT_CELLS_Y);
-        int current_y = random_y;
+        randomY = new Random().nextInt(Constants.COUNT_CELLS_Y);
+        int currentY = randomY;
 
 
 
         boolean placed = false;
         while(!placed){
-            if(gameField.getState(current_x, current_y) == 0) {
-                gameField.setState(current_x, current_y, state);
+            if(gameField.getState(currentX, currentY) == 0) {
+                gameField.setState(currentX, currentY, state);
                 placed = true;
             }else{
-                if(current_x+1 < Constants.COUNT_CELLS_X) {
-                    current_x++;
+                if(currentX+1 < Constants.COUNT_CELLS_X) {
+                    currentX++;
                 }else{
-                    current_x = 0;
-                    if(current_y+1 < Constants.COUNT_CELLS_Y) {
-                        current_y++;
+                    currentX = 0;
+                    if(currentY+1 < Constants.COUNT_CELLS_Y) {
+                        currentY++;
                     }else{
-                        current_y = 0;
+                        currentY = 0;
                     }
                 }
 
-                if ((current_x == random_x) && (current_y==random_y) ) {  //No place -> Something went wrong
+                if ((currentX == randomX) && (currentY==randomY) ) {  //No place -> Something went wrong
                     ErrorCatcher.cellCreationFailure();
                 }
             }
