@@ -1,0 +1,32 @@
+plugins {
+    id 'com.stehno.natives' version '0.3.0'
+    id 'java'
+    id 'application'
+}
+
+group 'ru.tproger.game2048'
+version '2.0.0-SNAPSHOT'
+
+mainClassName = "ru.tproger.game2048.main.Main"
+sourceCompatibility = 1.8
+
+dependencies {
+    // LWJGL
+    compile "org.lwjgl.lwjgl:lwjgl:${lwjglVersion}"
+    compile "org.lwjgl.lwjgl:lwjgl-platform:${lwjglVersion}:natives-windows"
+    compile "org.lwjgl.lwjgl:lwjgl-platform:${lwjglVersion}:natives-linux"
+    compile "org.lwjgl.lwjgl:lwjgl-platform:${lwjglVersion}:natives-osx"
+
+    // Texture loader
+    compile "org.slick2d:slick2d-core:${slick2dVersion}"
+}
+
+repositories {
+    mavenCentral()
+}
+
+// LWJGL native libraries setup
+import java.nio.file.Paths
+applicationDefaultJvmArgs = ["-Djava.library.path=" + Paths.get("build", "natives")]
+
+build.dependsOn includeNatives
